@@ -30,11 +30,12 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      MYSQL_URI: mysql+pymysql://dwh_user:dwh_pass@mysql:3311/dwh2
+      MYSQL_URI: mysql+pymysql://root:root@mysql:3306/dwh2
       INPUT_DIR: /app/incoming
       ARCHIVE_DIR: /app/archive
       FILE_PATTERN: customer_addresses_*.csv
       RUN_ON_STARTUP: "true"
+      MYSQL_WAIT_TIMEOUT_SECONDS: "180"
       SCHEDULE_INTERVAL_SECONDS: "86400"
       TZ: Asia/Jakarta
     volumes:
