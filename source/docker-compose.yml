@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: dw_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dwh2
+      TZ: Asia/Jakarta
+    ports:
+      - "3311:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dw_worker
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MYSQL_URI: mysql+pymysql://dwh_user:dwh_pass@mysql:3311/dwh2
+      INPUT_DIR: /app/incoming
+      ARCHIVE_DIR: /app/archive
+      FILE_PATTERN: customer_addresses_*.csv
+      RUN_ON_STARTUP: "true"
+      SCHEDULE_INTERVAL_SECONDS: "86400"
+      TZ: Asia/Jakarta
+    volumes:
+      - ./incoming:/app/incoming
+      - ./archive:/app/archive
+      - ./data:/app/data
+
+volumes:
+  mysql_data:
